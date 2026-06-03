@@ -1,0 +1,4 @@
+node_modules/
+.env
+bot.out.log
+bot.err.log

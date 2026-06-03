@@ -1,0 +1,511 @@
+{
+  "parties": {
+    "1511634390160248832": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511634385625944169",
+      "messageChannelId": "1511633688599986226",
+      "messageId": "1511634390160248832",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511636466835390665": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511636464805613618",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511636466835390665",
+      "sequence": 2,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511636613749411873": {
+      "templateId": "purification",
+      "creatorId": "697428565968552029",
+      "channelId": "1511636612067496007",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511636613749411873",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511636715343712427": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511636713624178868",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511636715343712427",
+      "sequence": 3,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511636881975279737": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511636879580336158",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511636881975279737",
+      "sequence": 4,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": [
+          "697428565968552029"
+        ]
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511637771649810442": {
+      "templateId": "purification",
+      "creatorId": "697428565968552029",
+      "channelId": "1511637769611514029",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511637771649810442",
+      "sequence": 2,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511638513588900011": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511638511638286407",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511638513588900011",
+      "sequence": 5,
+      "status": "closed",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511640011450224751": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511640010108047420",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511640011450224751",
+      "sequence": 1,
+      "status": "closed",
+      "participants": {
+        "main": [],
+        "sub": [
+          "697428565968552029"
+        ],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511640262399496364": {
+      "templateId": "purification",
+      "creatorId": "697428565968552029",
+      "channelId": "1511640260986015866",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511640262399496364",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511642518347841616": {
+      "templateId": "muspel",
+      "creatorId": "697428565968552029",
+      "channelId": "1511642515835453481",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511642518347841616",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511642534550442087": {
+      "templateId": "purification",
+      "creatorId": "697428565968552029",
+      "channelId": "1511642532789096469",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511642534550442087",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511643334827839579": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511643333124948070",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511643334827839579",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511645055310364672": {
+      "templateId": "purification",
+      "creatorId": "697428565968552029",
+      "channelId": "1511645052022161539",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511645055310364672",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511646456652759110": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511646454718922772",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511646456652759110",
+      "sequence": 2,
+      "status": "open",
+      "participants": {
+        "main": [
+          "697428565968552029"
+        ],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511648461341331528": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511648459311157348",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511648461341331528",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511648480156848128": {
+      "templateId": "purification",
+      "creatorId": "697428565968552029",
+      "channelId": "1511648477954969741",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511648480156848128",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511648495969243146": {
+      "templateId": "muspel",
+      "creatorId": "697428565968552029",
+      "channelId": "1511648494337916988",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511648495969243146",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511651368010514476": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511651367079383121",
+      "messageChannelId": "1511636174849052832",
+      "messageId": "1511651368010514476",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511665962255126599": {
+      "templateId": "rudra",
+      "creatorId": "410448741544493056",
+      "channelId": "1511665960749109309",
+      "messageChannelId": "1511665704397443092",
+      "messageId": "1511665962255126599",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "main": [
+          "410448741544493056",
+          "207658727401062402"
+        ],
+        "sub": [],
+        "heal": [
+          "697428565968552029"
+        ]
+      },
+      "knownUserIds": [
+        "410448741544493056",
+        "207658727401062402",
+        "697428565968552029"
+      ]
+    },
+    "1511666233957941339": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511666232250601532",
+      "messageChannelId": "1511665704397443092",
+      "messageId": "1511666233957941339",
+      "sequence": 2,
+      "status": "closed",
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511682685137977404": {
+      "templateId": "muspel",
+      "creatorId": "304900950278275075",
+      "channelId": "1511682683137167463",
+      "messageChannelId": "1511667093093875824",
+      "messageId": "1511682685137977404",
+      "sequence": 1,
+      "status": "open",
+      "participants": {
+        "tank": [
+          "304900950278275075"
+        ],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "304900950278275075"
+      ]
+    },
+    "1511685505815941333": {
+      "templateId": "muspel",
+      "creatorId": "697428565968552029",
+      "channelId": "1511685504247136286",
+      "messageChannelId": "1511667093093875824",
+      "messageId": "1511685505815941333",
+      "sequence": 2,
+      "status": "open",
+      "createdAt": 1780484306870,
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511685576464666695": {
+      "templateId": "muspel",
+      "creatorId": "697428565968552029",
+      "channelId": "1511685574870827191",
+      "messageChannelId": "1511667093093875824",
+      "messageId": "1511685576464666695",
+      "sequence": 1,
+      "status": "closed",
+      "createdAt": 1780484323696,
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": [
+          "697428565968552029"
+        ]
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ],
+      "summaryMessageId": "1511685656999497839",
+      "summarySentAt": 1780484343546,
+      "listingDeletedAt": 1780484343825
+    },
+    "1511686194524852224": {
+      "templateId": "rudra",
+      "creatorId": "697428565968552029",
+      "channelId": "1511686191722790963",
+      "messageChannelId": "1511664149980123197",
+      "messageId": "1511686194524852224",
+      "sequence": 1,
+      "status": "open",
+      "createdAt": 1780484471041,
+      "participants": {
+        "main": [],
+        "sub": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511686230662971462": {
+      "templateId": "purification",
+      "creatorId": "697428565968552029",
+      "channelId": "1511686229249495111",
+      "messageChannelId": "1511663936955613254",
+      "messageId": "1511686230662971462",
+      "sequence": 1,
+      "status": "open",
+      "createdAt": 1780484479680,
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511686271037210834": {
+      "templateId": "muspel",
+      "creatorId": "697428565968552029",
+      "channelId": "1511686269631987732",
+      "messageChannelId": "1511667093093875824",
+      "messageId": "1511686271037210834",
+      "sequence": 1,
+      "status": "open",
+      "createdAt": 1780484489317,
+      "participants": {
+        "tank": [],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "697428565968552029"
+      ]
+    },
+    "1511686455238594670": {
+      "templateId": "muspel",
+      "creatorId": "304900950278275075",
+      "channelId": "1511686453535445144",
+      "messageChannelId": "1511667093093875824",
+      "messageId": "1511686455238594670",
+      "sequence": 1,
+      "status": "open",
+      "createdAt": 1780484533232,
+      "participants": {
+        "tank": [
+          "304900950278275075"
+        ],
+        "dealer": [],
+        "heal": []
+      },
+      "knownUserIds": [
+        "304900950278275075"
+      ]
+    },
+    "1511767747120468221": {
+      "templateId": "muspel",
+      "creatorId": "410448741544493056",
+      "channelId": "1511767744662601900",
+      "messageChannelId": "1511667093093875824",
+      "messageId": "1511767747120468221",
+      "sequence": 2,
+      "status": "open",
+      "createdAt": 1780503914229,
+      "participants": {
+        "tank": [],
+        "dealer": [
+          "410448741544493056"
+        ],
+        "heal": []
+      },
+      "knownUserIds": [
+        "410448741544493056"
+      ]
+    }
+  },
+  "updateState": {
+    "lastAionUpdateUrl": "https://aion2.plaync.com/ko-kr/board/update/view?articleId=50167775"
+  }
+}
