@@ -11,7 +11,6 @@ const {
   REST,
   Routes,
   SlashCommandBuilder,
-  StringSelectMenuBuilder,
   TextInputBuilder,
   TextInputStyle,
 } = require('discord.js');
@@ -634,19 +633,49 @@ function getPartyRangeEndDate(startDate) {
   return addDays(startDate, daysUntilTuesday);
 }
 
+function getPartyWeekRange(baseDate) {
+  const startDate = getCurrentWeekWednesday(baseDate);
+  const endDate = addDays(startDate, 6);
+  return {
+    startDate,
+    endDate,
+    label: `${formatPartyDateLabel(startDate)} ~ ${formatPartyDateLabel(endDate)}`,
+  };
+}
+
+function getPartyScheduleCloseAt(endDate) {
+  return new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() + 1).getTime();
+}
+
 function buildPartySchedule(type, rawValue) {
+  if (rawValue?.startDate instanceof Date && rawValue?.endDate instanceof Date && rawValue?.label) {
+    return {
+      type,
+      label: rawValue.label,
+      startDate: rawValue.startDate,
+      endDate: rawValue.endDate,
+      closeAt: getPartyScheduleCloseAt(rawValue.endDate),
+    };
+  }
+
   if (rawValue instanceof Date) {
     if (type === 'range') {
       const endDate = getPartyRangeEndDate(rawValue);
       return {
         type: 'range',
         label: `${formatPartyDateLabel(rawValue)} ~ ${formatPartyDateLabel(endDate)}`,
+        startDate: rawValue,
+        endDate,
+        closeAt: getPartyScheduleCloseAt(endDate),
       };
     }
 
     return {
       type: 'date',
       label: formatPartyDateLabel(rawValue),
+      startDate: rawValue,
+      endDate: rawValue,
+      closeAt: getPartyScheduleCloseAt(rawValue),
     };
   }
 
@@ -665,12 +694,16 @@ function buildPartySchedule(type, rawValue) {
     return {
       type: 'range',
       label: `${formatPartyDateLabel(startDate)} ~ ${formatPartyDateLabel(endDate)}`,
+      startDate,
+      endDate,
+      closeAt: getPartyScheduleCloseAt(endDate),
     };
   }
 
   return {
     type: 'date',
     label: normalizedValue,
+    closeAt: null,
   };
 }
 
@@ -1116,6 +1149,9 @@ async function createParty(interaction, templateId, scheduleInput = null) {
       sequence,
       scheduleType: schedule.type,
       scheduleLabel: schedule.label,
+      scheduleStartAt: schedule.startDate?.getTime() || null,
+      scheduleEndAt: schedule.endDate?.getTime() || null,
+      autoCloseAt: schedule.closeAt || null,
       status: 'open',
       createdAt: Date.now(),
       participants: Object.fromEntries(template.roles.map((role) => [role.key, []])),
@@ -1401,6 +1437,29 @@ async function closePartyFromButton(interaction, guild, party) {
   }
 }
 
+async function closePartyAutomatically(guild, party) {
+  party.status = 'closed';
+  party.closedAt = Date.now();
+  party.closedReason = 'auto_schedule_end';
+  saveData();
+
+  try {
+    await sendPartySummaryMessage(guild, party);
+    await deletePartyListingMessage(guild, party);
+
+    const partyChannel = await guild.channels.fetch(party.channelId).catch(() => null);
+    if (partyChannel && config.closedPartyCategoryId) {
+      await partyChannel.setParent(config.closedPartyCategoryId, {
+        lockPermissions: false,
+      });
+    }
+
+    await partyChannel?.send('선택한 파티 일정이 종료되어 모집이 자동 마감되었어요.');
+  } catch (error) {
+    console.error('파티 자동 마감 중 오류:', error);
+  }
+}
+
 async function cleanupExpiredPartyListings() {
   if (!client.isReady()) {
     return;
@@ -1410,11 +1469,7 @@ async function cleanupExpiredPartyListings() {
   const guildCache = new Map();
 
   for (const party of Object.values(runtimeData.parties)) {
-    if (party.status !== 'open' || party.listingDeletedAt || !party.createdAt) {
-      continue;
-    }
-
-    if (now - party.createdAt < PARTY_LISTING_TTL_MS) {
+    if (party.status !== 'open') {
       continue;
     }
 
@@ -1425,6 +1480,19 @@ async function cleanupExpiredPartyListings() {
         return;
       }
       guildCache.set(config.guildId, guild);
+    }
+
+    if (party.autoCloseAt && now >= party.autoCloseAt) {
+      await closePartyAutomatically(guild, party);
+      continue;
+    }
+
+    if (party.listingDeletedAt || !party.createdAt) {
+      continue;
+    }
+
+    if (now - party.createdAt < PARTY_LISTING_TTL_MS) {
+      continue;
     }
 
     await deletePartyListingMessage(guild, party);
@@ -2087,32 +2155,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 
-  if (interaction.isStringSelectMenu()) {
-    if (interaction.customId.startsWith('party_pick_month_')) {
-      const parts = interaction.customId.replace('party_pick_month_', '').split('_');
-      const mode = parts[0];
-      const templateId = parts.slice(1).join('_');
-      const selectedMonth = Number(interaction.values[0]);
-
-      await showPartyDatePicker(interaction, templateId, mode, selectedMonth);
-      return;
-    }
-
-    if (interaction.customId.startsWith('party_pick_day_')) {
-      const parts = interaction.customId.replace('party_pick_day_', '').split('_');
-      const mode = parts[0];
-      const templateId = parts[1];
-      const month = Number(parts[2]);
-      const day = Number(interaction.values[0]);
-      const selectedDate = resolvePartyDateFromMonthDay(month, day);
-
-      await createParty(interaction, templateId, { type: mode, value: selectedDate });
-      return;
-    }
-
-    return;
-  }
-
   if (!interaction.isButton()) {
     return;
   }
@@ -2171,7 +2213,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const mode = parts[0];
     const templateId = parts[1];
     const presetKey = parts.slice(2).join('_');
-    const preset = getPartyQuickPreset(mode, presetKey);
+    const preset = getPartyQuickPreset(presetKey);
 
     if (!preset) {
       await replyToInteraction(interaction, {
@@ -2181,7 +2223,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return;
     }
 
-    await createParty(interaction, templateId, { type: mode, value: preset.date });
+    await createParty(interaction, templateId, { type: mode, value: preset.schedule });
     return;
   }
 
@@ -2266,150 +2308,58 @@ function getCurrentKstDate() {
   return new Date(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate());
 }
 
-function getDaysInMonth(year, month) {
-  return new Date(year, month, 0).getDate();
-}
-
-function resolvePartyDateFromMonthDay(month, day) {
-  const today = getCurrentKstDate();
-  let year = today.getFullYear();
-  let selectedDate = new Date(year, month - 1, day);
-
-  if (selectedDate < today) {
-    year += 1;
-    selectedDate = new Date(year, month - 1, day);
-  }
-
-  return selectedDate;
-}
-
-function getNextWeekday(baseDate, targetDay) {
-  const currentDay = baseDate.getDay();
-  let diff = (targetDay - currentDay + 7) % 7;
-  if (diff === 0) {
-    diff = 7;
-  }
-
-  return addDays(baseDate, diff);
-}
-
 function getCurrentWeekWednesday(baseDate) {
   const diff = (baseDate.getDay() - 3 + 7) % 7;
   return addDays(baseDate, -diff);
 }
 
-function createPartyQuickDatePresets(mode) {
+function createPartyWeekPresets() {
   const today = getCurrentKstDate();
-  const thisWeekWednesday = getCurrentWeekWednesday(today);
-  const nextWeekWednesday = addDays(thisWeekWednesday, 7);
+  const thisWeek = getPartyWeekRange(today);
+  const nextWeek = getPartyWeekRange(addDays(thisWeek.startDate, 7));
 
   return [
     {
-      key: 'today',
-      label: mode === 'range' ? '오늘 시작' : '오늘',
-      date: today,
+      key: 'this_week',
+      label: '이번주',
+      schedule: thisWeek,
     },
     {
-      key: 'tomorrow',
-      label: mode === 'range' ? '내일 시작' : '내일',
-      date: addDays(today, 1),
-    },
-    {
-      key: 'this_wed',
-      label: '이번주 수요일',
-      date: thisWeekWednesday,
-    },
-    {
-      key: 'next_wed',
-      label: '다음주 수요일',
-      date: nextWeekWednesday,
+      key: 'next_week',
+      label: '다음주',
+      schedule: nextWeek,
     },
   ];
 }
 
-function createPartyMonthOptions(selectedMonth) {
-  return Array.from({ length: 12 }, (_, index) => {
-    const month = index + 1;
-    return {
-      label: `${month}월`,
-      value: String(month),
-      default: month === selectedMonth,
-    };
-  });
+function buildPartyDatePickerContent() {
+  const presets = createPartyWeekPresets();
+  const presetLines = presets.map((preset) => `- ${preset.label}: ${preset.schedule.label}`).join('\n');
+  return `파티 일정을 선택해 주세요.\n${presetLines}\n선택한 일정은 화요일이 지나면 자동으로 마감돼요.`;
 }
 
-function createPartyDayOptions(month, selectedDay) {
-  const today = getCurrentKstDate();
-  const daysInMonth = getDaysInMonth(today.getFullYear(), month);
-
-  return Array.from({ length: daysInMonth }, (_, index) => {
-    const day = index + 1;
-    return {
-      label: `${day}일`,
-      value: String(day),
-      default: day === selectedDay,
-    };
-  });
-}
-
-function buildPartyDatePickerContent(mode, selectedMonth = null) {
-  const modeLabel = mode === 'range' ? '기간' : '일자';
-  const monthGuide = selectedMonth
-    ? `${selectedMonth}월을 골랐어요. 이제 일을 선택해 주세요.`
-    : '먼저 월을 고른 뒤 일을 선택해 주세요.';
-
-  const rangeGuide =
-    mode === 'range'
-      ? '\n기간은 선택한 시작일 기준으로 가장 가까운 화요일까지 자동 계산돼요.'
-      : '';
-
-  return `파티 ${modeLabel}를 선택해 주세요.\n빠른 선택 버튼을 쓰거나 월/일을 골라 만들 수 있어요.\n${monthGuide}${rangeGuide}`;
-}
-
-function createPartyDatePickerComponents(templateId, mode, selectedMonth = null) {
-  const quickButtons = createPartyQuickDatePresets(mode).map((preset, index) =>
+function createPartyDatePickerComponents(templateId, mode) {
+  const quickButtons = createPartyWeekPresets().map((preset, index) =>
     new ButtonBuilder()
       .setCustomId(`party_pick_quick_${mode}_${templateId}_${preset.key}`)
       .setLabel(preset.label)
-      .setStyle(index < 2 ? ButtonStyle.Primary : ButtonStyle.Secondary)
+      .setStyle(index === 0 ? ButtonStyle.Primary : ButtonStyle.Secondary)
   );
 
-  const monthMenu = new StringSelectMenuBuilder()
-    .setCustomId(`party_pick_month_${mode}_${templateId}`)
-    .setPlaceholder('월 선택')
-    .addOptions(createPartyMonthOptions(selectedMonth || getCurrentKstDate().getMonth() + 1));
-
-  const components = [
+  return [
     new ActionRowBuilder().addComponents(...quickButtons),
-    new ActionRowBuilder().addComponents(monthMenu),
   ];
-
-  if (selectedMonth) {
-    const dayMenu = new StringSelectMenuBuilder()
-      .setCustomId(`party_pick_day_${mode}_${templateId}_${selectedMonth}`)
-      .setPlaceholder('일 선택')
-      .addOptions(createPartyDayOptions(selectedMonth));
-
-    components.push(new ActionRowBuilder().addComponents(dayMenu));
-  }
-
-  return components;
 }
 
-function getPartyQuickPreset(mode, presetKey) {
-  return createPartyQuickDatePresets(mode).find((preset) => preset.key === presetKey) || null;
+function getPartyQuickPreset(presetKey) {
+  return createPartyWeekPresets().find((preset) => preset.key === presetKey) || null;
 }
 
-async function showPartyDatePicker(interaction, templateId, mode, selectedMonth = null) {
+async function showPartyDatePicker(interaction, templateId, mode) {
   const basePayload = {
-    content: buildPartyDatePickerContent(mode, selectedMonth),
-    components: createPartyDatePickerComponents(templateId, mode, selectedMonth),
+    content: buildPartyDatePickerContent(),
+    components: createPartyDatePickerComponents(templateId, mode),
   };
-
-  if (typeof interaction.update === 'function' && interaction.isStringSelectMenu()) {
-    await interaction.update(basePayload);
-    return;
-  }
 
   await replyToInteraction(interaction, {
     ...basePayload,
