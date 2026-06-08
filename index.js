@@ -456,6 +456,21 @@ function createSinglePartyInstallRow(templateId) {
   ];
 }
 
+function createPartyScheduleTypeRow(templateId) {
+  return [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`party_schedule_date_${templateId}`)
+        .setLabel('일자')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId(`party_schedule_range_${templateId}`)
+        .setLabel('기간')
+        .setStyle(ButtonStyle.Secondary)
+    ),
+  ];
+}
+
 function createMemoModal() {
   const nicknameInput = new TextInputBuilder()
     .setCustomId('memo_nickname')
@@ -512,6 +527,36 @@ function createJobNicknameModal(jobName) {
     .addComponents(new ActionRowBuilder().addComponents(nicknameInput));
 }
 
+function createPartyDateModal(templateId) {
+  const dateInput = new TextInputBuilder()
+    .setCustomId('party_date_value')
+    .setLabel('일자')
+    .setPlaceholder('예: 6/10(수) 또는 2026-06-10')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setMaxLength(40);
+
+  return new ModalBuilder()
+    .setCustomId(`party_date_modal_${templateId}`)
+    .setTitle('파티 일자 입력')
+    .addComponents(new ActionRowBuilder().addComponents(dateInput));
+}
+
+function createPartyRangeModal(templateId) {
+  const startDateInput = new TextInputBuilder()
+    .setCustomId('party_range_start_value')
+    .setLabel('기간 시작일')
+    .setPlaceholder('예: 2026-06-10 또는 6/10(수)')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setMaxLength(40);
+
+  return new ModalBuilder()
+    .setCustomId(`party_range_modal_${templateId}`)
+    .setTitle('파티 기간 시작일 입력')
+    .addComponents(new ActionRowBuilder().addComponents(startDateInput));
+}
+
 function formatMemoChannelName(nickname) {
   return `║🔱ㅣ${nickname.replace(/\r?\n/g, ' ').trim()}`.slice(0, 90);
 }
@@ -532,14 +577,109 @@ function formatInquiryChannelName(name) {
   return `문의-${base}-${suffix}`.slice(0, 90);
 }
 
-function formatPartyChannelName(template, sequence) {
-  return `${template.channelBase}-${sequence}`.slice(0, 90);
+function normalizePartyScheduleLabel(value) {
+  return value.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+}
+
+function parsePartyDateInput(rawValue) {
+  const value = rawValue.trim();
+  const fullMatch = value.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  const shortMatch = value.match(/^(\d{1,2})[-/.](\d{1,2})/);
+
+  let year;
+  let month;
+  let day;
+
+  if (fullMatch) {
+    year = Number(fullMatch[1]);
+    month = Number(fullMatch[2]);
+    day = Number(fullMatch[3]);
+  } else if (shortMatch) {
+    const now = new Date();
+    year = now.getFullYear();
+    month = Number(shortMatch[1]);
+    day = Number(shortMatch[2]);
+  } else {
+    return null;
+  }
+
+  const parsed = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function addDays(date, days) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function formatPartyDateLabel(date) {
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+  return `${date.getMonth() + 1}/${date.getDate()}(${dayNames[date.getDay()]})`;
+}
+
+function getPartyRangeEndDate(startDate) {
+  const dayOfWeek = startDate.getDay();
+  const daysUntilTuesday = (9 - dayOfWeek) % 7;
+  return addDays(startDate, daysUntilTuesday);
+}
+
+function buildPartySchedule(type, rawValue) {
+  const normalizedValue = normalizePartyScheduleLabel(rawValue);
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (type === 'range') {
+    const startDate = parsePartyDateInput(normalizedValue);
+    if (!startDate) {
+      return null;
+    }
+
+    const endDate = getPartyRangeEndDate(startDate);
+    return {
+      type: 'range',
+      label: `${formatPartyDateLabel(startDate)} ~ ${formatPartyDateLabel(endDate)}`,
+    };
+  }
+
+  return {
+    type: 'date',
+    label: normalizedValue,
+  };
+}
+
+function formatPartyScheduleSegment(scheduleLabel) {
+  if (!scheduleLabel) {
+    return '';
+  }
+
+  return normalizeChannelSegment(scheduleLabel)
+    .replace(/-/g, '')
+    .slice(0, 16);
+}
+
+function formatPartyChannelName(template, sequence, scheduleLabel = '') {
+  const scheduleSegment = formatPartyScheduleSegment(scheduleLabel);
+  if (!scheduleSegment) {
+    return `${template.channelBase}-${sequence}`.slice(0, 90);
+  }
+
+  return `${template.channelBase}-${scheduleSegment}-${sequence}`.slice(0, 90);
 }
 
 async function getNextPartySequence(guild, template) {
   await guild.channels.fetch();
 
-  const pattern = new RegExp(`^${template.channelBase}-(\\d+)$`);
   const usedNumbers = new Set();
 
   guild.channels.cache.forEach((channel) => {
@@ -547,9 +687,15 @@ async function getNextPartySequence(guild, template) {
       return;
     }
 
-    const match = channel.name.match(pattern);
-    if (match) {
-      usedNumbers.add(Number(match[1]));
+    if (!channel.name.startsWith(`${template.channelBase}-`)) {
+      return;
+    }
+
+    const segments = channel.name.split('-');
+    const lastSegment = Number(segments[segments.length - 1]);
+
+    if (Number.isInteger(lastSegment) && lastSegment > 0) {
+      usedNumbers.add(lastSegment);
     }
   });
 
@@ -629,13 +775,23 @@ function getPartyCapacity(party) {
   return template.roles.reduce((total, role) => total + role.limit, 0);
 }
 
+function formatPartyScheduleLine(party) {
+  if (!party.scheduleLabel || !party.scheduleType) {
+    return null;
+  }
+
+  const scheduleTypeLabel = party.scheduleType === 'range' ? '기간' : '일자';
+  return `일정: **${scheduleTypeLabel} | ${party.scheduleLabel}**`;
+}
+
 function buildPartyContent(party) {
   const template = getTemplateById(party.templateId);
   if (!template) {
     return '❌ 파티 정보를 불러올 수 없어요.';
   }
 
-  const partyName = formatPartyChannelName(template, party.sequence);
+  const partyName = formatPartyChannelName(template, party.sequence, party.scheduleLabel);
+  const scheduleLine = formatPartyScheduleLine(party);
 
   const lines = [
     '=============================================',
@@ -645,6 +801,10 @@ function buildPartyContent(party) {
     `파티장: <@${party.creatorId}>`,
     '',
   ];
+
+  if (scheduleLine) {
+    lines.splice(5, 0, scheduleLine);
+  }
 
   for (const role of template.roles) {
     const members = party.participants[role.key] || [];
@@ -678,7 +838,8 @@ function buildPartySummaryContent(party) {
     return '❌ 파티 요약 정보를 불러올 수 없어요.';
   }
 
-  const partyName = formatPartyChannelName(template, party.sequence);
+  const partyName = formatPartyChannelName(template, party.sequence, party.scheduleLabel);
+  const scheduleLine = formatPartyScheduleLine(party);
   const lines = [
     '=============================================',
     `${template.icon} **${template.title} 최종 명단 (마감)**`,
@@ -687,6 +848,10 @@ function buildPartySummaryContent(party) {
     `파티장: <@${party.creatorId}>`,
     '',
   ];
+
+  if (scheduleLine) {
+    lines.splice(5, 0, scheduleLine);
+  }
 
   for (const role of template.roles) {
     const members = party.participants[role.key] || [];
@@ -838,7 +1003,7 @@ async function syncPartyChannelPermissions(guild, party) {
   saveData();
 }
 
-async function createParty(interaction, templateId) {
+async function createParty(interaction, templateId, scheduleInput = null) {
   const guild = interaction.guild;
   const member = interaction.member;
   const template = getTemplateById(templateId);
@@ -861,8 +1026,20 @@ async function createParty(interaction, templateId) {
     return;
   }
 
+  const schedule = buildPartySchedule(scheduleInput?.type || 'date', scheduleInput?.value || '');
+  if (!schedule) {
+    await replyToInteraction(interaction, {
+      content:
+        scheduleInput?.type === 'range'
+          ? '기간 시작일은 `2026-06-10` 또는 `6/10` 형식으로 입력해 주세요.'
+          : '일자를 입력해 주세요.',
+      ephemeral: true,
+    });
+    return;
+  }
+
   const sequence = await getNextPartySequence(guild, template);
-  const channelName = formatPartyChannelName(template, sequence);
+  const channelName = formatPartyChannelName(template, sequence, schedule.label);
 
   try {
     const permissionOverwrites = [
@@ -921,6 +1098,8 @@ async function createParty(interaction, templateId) {
       messageChannelId: interaction.channelId,
       messageId: '',
       sequence,
+      scheduleType: schedule.type,
+      scheduleLabel: schedule.label,
       status: 'open',
       createdAt: Date.now(),
       participants: Object.fromEntries(template.roles.map((role) => [role.key, []])),
@@ -1811,6 +1990,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
       return;
     }
 
+    if (interaction.customId.startsWith('party_date_modal_')) {
+      const templateId = interaction.customId.replace('party_date_modal_', '');
+      const dateValue = interaction.fields.getTextInputValue('party_date_value');
+      await createParty(interaction, templateId, { type: 'date', value: dateValue });
+      return;
+    }
+
+    if (interaction.customId.startsWith('party_range_modal_')) {
+      const templateId = interaction.customId.replace('party_range_modal_', '');
+      const startDateValue = interaction.fields.getTextInputValue('party_range_start_value');
+      await createParty(interaction, templateId, { type: 'range', value: startDateValue });
+      return;
+    }
+
     if (interaction.customId.startsWith('job_modal_')) {
       const selectedJob = interaction.customId.replace('job_modal_', '');
       const guild = interaction.guild;
@@ -1893,17 +2086,41 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 
   if (interaction.customId === 'party_create_rudra') {
-    await createParty(interaction, 'rudra');
+    await replyToInteraction(interaction, {
+      content: '파티 일정 입력 방식을 선택해 주세요.',
+      components: createPartyScheduleTypeRow('rudra'),
+      ephemeral: true,
+    });
     return;
   }
 
   if (interaction.customId === 'party_create_purification') {
-    await createParty(interaction, 'purification');
+    await replyToInteraction(interaction, {
+      content: '파티 일정 입력 방식을 선택해 주세요.',
+      components: createPartyScheduleTypeRow('purification'),
+      ephemeral: true,
+    });
     return;
   }
 
   if (interaction.customId === 'party_create_muspel') {
-    await createParty(interaction, 'muspel');
+    await replyToInteraction(interaction, {
+      content: '파티 일정 입력 방식을 선택해 주세요.',
+      components: createPartyScheduleTypeRow('muspel'),
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (interaction.customId.startsWith('party_schedule_date_')) {
+    const templateId = interaction.customId.replace('party_schedule_date_', '');
+    await interaction.showModal(createPartyDateModal(templateId));
+    return;
+  }
+
+  if (interaction.customId.startsWith('party_schedule_range_')) {
+    const templateId = interaction.customId.replace('party_schedule_range_', '');
+    await interaction.showModal(createPartyRangeModal(templateId));
     return;
   }
 
